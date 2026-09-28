@@ -1,4 +1,4 @@
-// draws the app icon (ink rounded square + acid bolt, same shape as the
+// draws the app icon (blurple rounded square + white bolt, same shape as the
 // titlebar mark) into a multi-size .ico: bmp entries for 16/24/32/48,
 // png for 256. also dumps a preview png to %TEMP%.
 import { deflateSync } from "node:zlib";
@@ -18,8 +18,8 @@ const BOLT = [
   [17, 8.5],
   [12, 8.5],
 ];
-const INK = [11, 12, 8]; // RGB #0B0C08
-const ACID = [216, 255, 61]; // RGB #D8FF3D
+const INK = [88, 101, 242]; // RGB #5865F2 (blurple)
+const ACID = [255, 255, 255]; // RGB #FFFFFF (bolt)
 
 function inPoly(px, py, poly) {
   let inside = false;

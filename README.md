@@ -24,7 +24,7 @@ so you know exactly when to claim.
 
 ## Download & install
 
-Grab `Quest.Rig_0.3.3_x64-setup.exe` from
+Grab `Quest.Rig_0.4.0_x64-setup.exe` from
 [Releases](../../releases) (built automatically by CI on every `v*` tag) and run
 it — standard installer with desktop/start-menu shortcuts and an
 English/Russian language selector. WebView2 is bundled-installed if missing.
