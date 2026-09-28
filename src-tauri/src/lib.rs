@@ -55,7 +55,7 @@ pub struct FarmState {
     stash: Vec<StashedSession>,
 }
 
-// ── persistence ─────────────────────────────────────────────
+// persistence
 
 #[derive(Serialize, Deserialize)]
 struct SavedTotals {
@@ -191,8 +191,7 @@ fn load_saved() -> (HashMap<u32, TrackedProcess>, Vec<StashedSession>, Totals) {
 
     for s in saved.sessions {
         let exe_path = PathBuf::from(&s.exe_path);
-        // still alive after a restart (fakes outlive the app) — adopt it,
-        // timer keeps running
+        // still alive after a restart, adopt it and keep the timer running
         if win::process_matches(s.pid, &exe_path) {
             processes.insert(
                 s.pid,
@@ -204,7 +203,7 @@ fn load_saved() -> (HashMap<u32, TrackedProcess>, Vec<StashedSession>, Totals) {
                 },
             );
         } else {
-            // died while we were away — stash what it reached so it can be resumed
+            // died while we were away, stash the progress so it can be resumed
             let elapsed =
                 s.accumulated + saved.updated_at.saturating_sub(s.started_at);
             stash.push(StashedSession {
@@ -235,7 +234,7 @@ fn now_unix() -> u64 {
 }
 
 fn games_root() -> PathBuf {
-    // not %TEMP%: cleaners wipe it and some AV heuristics flag exes that run from there
+    // not %TEMP%: cleaners wipe it, and AV heuristics flag exes run from there
     let base = std::env::var("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|_| std::env::temp_dir());
@@ -331,7 +330,7 @@ fn spawn_tracked(
     accumulated: u64,
 ) -> Result<u32, String> {
     ensure_stub(&dest)?;
-    // Best-effort: give the process a real window named after the game.
+    // best effort: give the process a real window named after the game
     let pid = win::spawn_visible_no_activate(&dest)?;
     let _ = win::tame_window(pid, &title);
     let started_at = now_unix();
@@ -372,7 +371,7 @@ mod win {
         WS_EX_TOOLWINDOW,
     };
 
-    // Windows keeps minimized apps at this X; nothing renders on screen there.
+    // minimized windows live at this X, nothing renders on screen there
     const OFFSCREEN_X: i32 = -32000;
     const OFFSCREEN_Y: i32 = -32000;
 
@@ -444,7 +443,7 @@ mod win {
         state.found
     }
 
-    // real window, just off-screen with no taskbar button — enough for the
+    // a real window, off-screen with no taskbar button: visible to the
     // scanner, invisible to the user
     pub fn tame_window(pid: u32, title: &str) -> bool {
         for _ in 0..40 {
@@ -507,8 +506,8 @@ mod win {
             }
             let ok = TerminateProcess(handle, 1);
             if ok != 0 {
-                // TerminateProcess is async: wait so the exe file is unlocked
-                // by the time the caller tries to delete it.
+                // TerminateProcess returns before the exe file is unlocked,
+                // so wait for it before the caller deletes the file
                 WaitForSingleObject(handle, 5000);
             }
             CloseHandle(handle);
@@ -606,7 +605,7 @@ fn start_dummy_process(
     }
 
     let title = if game_name.trim().is_empty() { exe_name } else { game_name };
-    // Launching fresh clears any stashed leftover for the same executable.
+    // launching fresh clears any stashed leftover for the same executable
     {
         let mut stash = state
             .stash
@@ -644,7 +643,7 @@ fn resume_stashed_process(state: tauri::State<AppState>, exe_path: String) -> Re
     };
 
     if let Some(pid) = adopted_pid {
-        // Came back alive on its own — keep tracking, drop the stash copy.
+        // came back alive on its own, keep tracking and drop the stash copy
         state.persist();
         return Ok(pid);
     }
@@ -665,7 +664,7 @@ fn drop_stashed_process(state: tauri::State<AppState>, exe_path: String) -> Resu
             .ok_or_else(|| "Stashed session not found".to_string())?;
         stash.remove(pos)
     };
-    // The run never made it to a proper stop — bank what it reached.
+    // the run never stopped properly, bank the time it reached
     state.bank(dropped.accumulated);
     state.persist();
     Ok(())
@@ -712,7 +711,7 @@ fn list_processes(state: tauri::State<AppState>) -> Result<Vec<ProcessInfo>, Str
         .lock()
         .map_err(|_| "Process state is locked".to_string())?;
 
-    // reaped = the process died on its own; stash it so it can be resumed
+    // the process died on its own, stash it so it can be resumed
     let dead: Vec<(u32, TrackedProcess)> = map
         .iter()
         .filter(|(pid, t)| !win::process_matches(**pid, &t.exe_path))

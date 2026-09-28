@@ -126,7 +126,7 @@ function iconUrl(app: DiscordApp): string | null {
 }
 
 function bannerUrl(app: DiscordApp): string | null {
-  // real landscape banner: Steam header art via the catalog's own SKU mapping
+  // landscape banner: Steam header art resolved through the catalog SKU table
   const steamId = (app.third_party_skus ?? []).find(
     (s) => (s.distributor ?? "").toLowerCase() === "steam" && s.id,
   )?.id;
@@ -170,7 +170,7 @@ function orderGames(all: GameRow[], pinned: string[]): GameRow[] {
 function filterGames(ordered: GameRow[], query: string, pinned: string[]): GameRow[] {
   const q = query.trim().toLowerCase();
   if (!q) return ordered.slice(0, 200);
-  // pinned live on top outside search — hide them from results
+  // pinned games sit on top outside search, so hide them from results
   const pinSet = new Set(pinned);
   return ordered.filter((g) => !pinSet.has(g.id) && g.searchText.includes(q)).slice(0, 200);
 }
@@ -211,7 +211,7 @@ export default function App() {
     const isPin = pinned.includes(id);
     const inSearch = query.trim().length > 0;
     const nextPinned = isPin ? pinned.filter((p) => p !== id) : [id, ...pinned.filter((p) => p !== id)];
-    // reordering must not yank selection onto another game — follow the selected one
+    // reordering must not move selection to another game, follow the selected one
     const followSelection = () => {
       const selId = selected?.id;
       if (!selId) return;
@@ -316,7 +316,7 @@ export default function App() {
 
   const selected = filtered[Math.min(selectedIdx, Math.max(0, filtered.length - 1))] ?? null;
 
-  // backend reports full paths, catalog has bare names — match on file name
+  // backend reports full paths, catalog has bare names: match on file name
   const exeKey = (p: string) => p.split(/[\\/]/).pop()?.toLowerCase() ?? p.toLowerCase();
 
   const runningExes = useMemo(
@@ -366,7 +366,7 @@ export default function App() {
     setLeavingPid(pid);
     try {
       await invoke("stop_dummy_process", { pid });
-      // let the row fade/collapse out before unmounting it
+      // wait out the fade before unmounting the row
       await new Promise((r) => setTimeout(r, 260));
       setProcesses((prev) => prev.filter((p) => p.pid !== pid));
     } catch (e) {
@@ -447,7 +447,7 @@ export default function App() {
         <TitleBar />
 
         <main className="body">
-          {/* ── Library ─────────────────────────────── */}
+          {/* Library */}
           <section className="library">
             <div className="toolbar">
               <div className="searchbox">
@@ -545,7 +545,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* ── Detail / control panel ──────────────── */}
+          {/* Detail panel */}
           <aside className="panel">
             <div className="panel-scroll">
               <div className="card spotlight">

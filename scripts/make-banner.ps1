@@ -36,7 +36,7 @@ function New-RoundedRect([single]$x, [single]$y, [single]$w, [single]$h, [single
     return $p
 }
 
-# ── the icon, large: same colors as icon.ico (ink fill, no tint) ────────────
+# the icon, large
 $size = 400
 $ix = ($W - $size) / 2
 $iy = 170
@@ -56,7 +56,7 @@ for ($i = 0; $i -lt 6; $i++) {
 }
 $g.FillPolygon((New-Object System.Drawing.SolidBrush($acid)), $boltPts)
 
-# ── title: QUEST (text) / RIG (acid) ────────────────────────────────────────
+# title
 $fTitle = New-Object System.Drawing.Font('Segoe UI Black', 120)
 $fSub = New-Object System.Drawing.Font('Consolas', 34)
 $fFoot = New-Object System.Drawing.Font('Consolas', 22)
@@ -70,7 +70,7 @@ $ty = 640
 $g.DrawString($wt, $fTitle, (New-Object System.Drawing.SolidBrush($text)), $startX, $ty, $fmt)
 $g.DrawString($rt, $fTitle, (New-Object System.Drawing.SolidBrush($acid)), ($startX + $wtW), $ty, $fmt)
 
-# ── subtitle with manual letter-spacing ─────────────────────────────────────
+# subtitle with manual letter-spacing
 $sub = 'P L A Y - A - G A M E   Q U E S T   F A R M E R'
 $subW = $g.MeasureString($sub, $fSub).Width
 $br = New-Object System.Drawing.SolidBrush($mute)

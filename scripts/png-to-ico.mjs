@@ -1,6 +1,6 @@
-// builds a multi-size icon.ico from a source PNG (any 8-bit non-interlaced
-// RGB/RGBA/gray/palette PNG). applies a rounded-squircle mask so it reads as
-// an app tile, then assembles BMP entries for 16/24/32/48 + PNG for 256.
+// builds a multi-size icon.ico from a source PNG. applies a rounded mask
+// so it reads as an app tile, then assembles BMP entries for 16/24/32/48
+// plus PNG for 256.
 //   node scripts/png-to-ico.mjs [input] [output-ico]
 import { inflateSync, deflateSync } from "node:zlib";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,7 +12,7 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const input = process.argv[2] ?? join(root, "src", "icon.png");
 const output = process.argv[3] ?? join(root, "src-tauri", "icons", "icon.ico");
 
-// ── minimal PNG decoder ──────────────────────────────────────────────────────
+// png decoder
 function readU32(b, o) {
   return b.readUInt32BE(o);
 }
@@ -108,7 +108,7 @@ function decodePNG(buf) {
   return { width, height, rgba: px };
 }
 
-// ── area-average resample + squircle mask ────────────────────────────────────
+// resample + rounded mask
 function inRounded(px, py, s, r) {
   if (px < 0 || py < 0 || px >= s || py >= s) return false;
   const cx = Math.min(Math.max(px, r), s - r);
@@ -121,7 +121,7 @@ function resample(src, sw, sh, size) {
   const out = Buffer.alloc(size * size * 4);
   const r = size * 0.225;
   const ss = 3;
-  // assume square-ish source; letterbox-crop center square
+  // center-crop to square when the source is not
   const side = Math.min(sw, sh);
   const ox = (sw - side) / 2;
   const oy = (sh - side) / 2;
@@ -176,7 +176,7 @@ function resample(src, sw, sh, size) {
   return out;
 }
 
-// ── PNG encoder + ICO assembly (same as generate-icon.mjs) ───────────────────
+// png encoder + ico assembly
 const CRC_TABLE = (() => {
   const t = new Int32Array(256);
   for (let n = 0; n < 256; n++) {

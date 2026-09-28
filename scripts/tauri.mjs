@@ -1,7 +1,7 @@
-// tauri wrapper. fun fact: tauri-winres chokes on apostrophes in the project
-// path while embedding the window icon (RC2135: file not found), so the icon
-// is staged to %LOCALAPPDATA% and bundle.icon is overridden via TAURI_CONFIG.
-// on normal paths the override just points at the same staged copy.
+// tauri wrapper. tauri-winres fails on apostrophes in the project path when
+// embedding the window icon (RC2135), so the icon is staged to %LOCALAPPDATA%
+// and bundle.icon is overridden via TAURI_CONFIG. on normal paths the override
+// just points at the same staged copy.
 //   node scripts/tauri.mjs dev
 //   node scripts/tauri.mjs build
 import { spawnSync } from "node:child_process";

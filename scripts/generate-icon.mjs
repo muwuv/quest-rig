@@ -1,6 +1,5 @@
-// draws the app icon (blurple rounded square + white bolt, same shape as the
-// titlebar mark) into a multi-size .ico: bmp entries for 16/24/32/48,
-// png for 256. also dumps a preview png to %TEMP%.
+// old procedural icon (blurple square + bolt). superseded by png-to-ico.mjs,
+// which builds icon.ico from a source PNG. kept as a fallback.
 import { deflateSync } from "node:zlib";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -82,7 +81,7 @@ function renderRGBA(size) {
   return rgba;
 }
 
-// ── minimal PNG encoder (8-bit RGBA, no filters) ────────────────────────────
+// minimal PNG encoder (8-bit RGBA, no filters)
 const CRC_TABLE = (() => {
   const t = new Int32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -126,7 +125,7 @@ function encodePNG(size, rgba) {
   ]);
 }
 
-// ── ICO assembly ─────────────────────────────────────────────────────────────
+// ICO assembly
 function dibFromRGBA(size, rgba) {
   const hdr = Buffer.alloc(40);
   hdr.writeUInt32LE(40, 0);
@@ -134,7 +133,7 @@ function dibFromRGBA(size, rgba) {
   hdr.writeInt32LE(size * 2, 8); // XOR + AND
   hdr.writeUInt16LE(1, 12);
   hdr.writeUInt16LE(32, 14);
-  // DIB pixels are BGRA, bottom-up — our buffer is RGBA, top-down.
+  // DIB pixels are BGRA, bottom-up; our buffer is RGBA, top-down
   const xor = Buffer.alloc(size * size * 4);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {

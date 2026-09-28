@@ -1,6 +1,5 @@
-// Save icons inlined from src/*.svg (svgrepo) so they follow currentColor
-// and can animate on toggle. Loose .svg files are removed to keep vite's
-// Windows watcher from locking them (EBUSY crash seen in dev log).
+// save icons, inlined so they follow currentColor. kept in code instead of
+// loose .svg files (vite file watching trips over those on Windows).
 
 export function SaveAddIcon() {
   return (

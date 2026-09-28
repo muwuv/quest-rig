@@ -16,7 +16,7 @@ const staged = join(srcTauri, "binaries", "game_host.exe");
 const fresh = process.argv.includes("--fresh");
 
 // Stage the window icon next to the game files (apostrophe-free path; the
-// Tauri CLI wrapper points bundle.icon at it — see scripts/tauri.mjs).
+// Tauri CLI wrapper points bundle.icon at it (see scripts/tauri.mjs).
 const iconSrc = join(srcTauri, "icons", "icon.ico");
 const iconDst = join(process.env.LOCALAPPDATA || root, "DiscordQuest", "icon.ico");
 mkdirSync(dirname(iconDst), { recursive: true });
