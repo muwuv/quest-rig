@@ -21,7 +21,24 @@ const iconDst = join(
 mkdirSync(dirname(iconDst), { recursive: true });
 copyFileSync(iconSrc, iconDst);
 
-const cfg = JSON.stringify({ bundle: { icon: [iconDst] } });
+const cfg = JSON.stringify({
+  bundle: {
+    icon: [iconDst],
+    // optional code signing: set WINDOWS_CERT_THUMBPRINT to the thumbprint
+    // of a code signing cert in the local store (see release.yml, which
+    // imports it from the WINDOWS_CERTIFICATE secret). without it the
+    // build stays unsigned.
+    ...(process.env.WINDOWS_CERT_THUMBPRINT
+      ? {
+          windows: {
+            certificateThumbprint: process.env.WINDOWS_CERT_THUMBPRINT,
+            digestAlgorithm: "SHA256",
+            timestampUrl: "http://timestamp.digicert.com",
+          },
+        }
+      : {}),
+  },
+});
 
 const result = spawnSync("npx", ["tauri", ...process.argv.slice(2)], {
   stdio: "inherit",

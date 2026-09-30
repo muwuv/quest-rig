@@ -752,10 +752,139 @@ fn list_processes(state: tauri::State<AppState>) -> Result<Vec<ProcessInfo>, Str
         .collect())
 }
 
+const QUEST_API: &str = "https://discord.com/api/v9/quests";
+
+// look like the desktop client: quest inventory can depend on it
+const QUEST_UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9259 Chrome/148.0.7778.280 Electron/42.11.4 Safari/537.36";
+const QUEST_SUPER_PROPS: &str = "eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiRGlzY29yZCBDbGllbnQiLCJyZWxlYXNlX2NoYW5uZWwiOiJzdGFibGUiLCJjbGllbnRfdmVyc2lvbiI6IjEuMC45MjU5Iiwib3NfdmVyc2lvbiI6IjEwLjAuMjYyMDAiLCJvc19hcmNoIjoieDY0IiwiYXBwX2FyY2giOiJ4NjQiLCJzeXN0ZW1fbG9jYWxlIjoiZW4tVVMiLCJicm93c2VyX3VzZXJfYWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBkaXNjb3JkLzEuMC45MjU5IENocm9tZS8xNDguMC43Nzc4LjI4MCBFbGVjdHJvbi80Mi4xMS40IFNhZmFyaS81MzcuMzYiLCJicm93c2VyX3ZlcnNpb24iOiI0Mi4xMS40IiwiY2xpZW50X2J1aWxkX251bWJlciI6NjIyODA1LCJuYXRpdmVfYnVpbGRfbnVtYmVyIjo5MTQ5NywiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbH0=";
+
+fn quest_headers(req: ureq::Request, token: &str) -> ureq::Request {
+    req.set("Authorization", token)
+        .set("User-Agent", QUEST_UA)
+        .set("X-Super-Properties", QUEST_SUPER_PROPS)
+        .set("X-Discord-Locale", "en-US")
+        .set("X-Discord-Timezone", "Asia/Qyzylorda")
+        .set("Accept-Language", "en-US")
+}
+
+fn quest_agent() -> ureq::Agent {
+    ureq::AgentBuilder::new()
+        .timeout(std::time::Duration::from_secs(25))
+        .build()
+}
+
+fn quest_api_error(where_: &str, err: ureq::Error) -> String {
+    match err {
+        ureq::Error::Status(code, resp) => {
+            let body = resp.into_string().unwrap_or_default();
+            let short = body.chars().take(300).collect::<String>();
+            format!("Discord {code} on {where_}: {short}")
+        }
+        e => format!("request failed on {where_}: {e}"),
+    }
+}
+
+fn quest_get(token: &str, path: &str) -> Result<serde_json::Value, String> {
+    let url = format!("{QUEST_API}/{path}");
+    let resp = quest_headers(quest_agent().get(&url), token).call();
+    match resp {
+        Ok(r) => {
+            let body = r
+                .into_string()
+                .map_err(|e| format!("Failed to read Discord response: {e}"))?;
+            serde_json::from_str(&body).map_err(|e| format!("Invalid Discord JSON: {e}"))
+        }
+        Err(e) => Err(quest_api_error("fetch", e)),
+    }
+}
+
+fn quest_post(
+    token: &str,
+    path: &str,
+    body: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let url = format!("{QUEST_API}/{path}");
+    let resp = quest_headers(quest_agent().post(&url), token)
+        .set("Content-Type", "application/json")
+        .send_json(body);
+    match resp {
+        Ok(r) => {
+            let text = r
+                .into_string()
+                .map_err(|e| format!("Failed to read Discord response: {e}"))?;
+            if text.trim().is_empty() {
+                return Ok(serde_json::Value::Null);
+            }
+            serde_json::from_str(&text).map_err(|e| format!("Invalid Discord JSON: {e}"))
+        }
+        Err(e) => Err(quest_api_error("update", e)),
+    }
+}
+
+#[tauri::command]
+fn quest_list(token: String) -> Result<serde_json::Value, String> {
+    if token.trim().is_empty() {
+        return Err("token is empty".to_string());
+    }
+    quest_get(token.trim(), "@me")
+}
+
+#[tauri::command]
+fn quest_me(token: String) -> Result<serde_json::Value, String> {
+    if token.trim().is_empty() {
+        return Err("token is empty".to_string());
+    }
+    let url = "https://discord.com/api/v9/users/@me";
+    let resp = quest_headers(quest_agent().get(url), token.trim()).call();
+    match resp {
+        Ok(r) => {
+            let body = r
+                .into_string()
+                .map_err(|e| format!("Failed to read Discord response: {e}"))?;
+            serde_json::from_str(&body).map_err(|e| format!("Invalid Discord JSON: {e}"))
+        }
+        Err(e) => Err(quest_api_error("fetch", e)),
+    }
+}
+
+#[tauri::command]
+fn quest_enroll(token: String, quest_id: String) -> Result<serde_json::Value, String> {
+    quest_post(
+        token.trim(),
+        &format!("{quest_id}/enroll"),
+        serde_json::json!({ "is_targeted": false, "location": 11, "metadata_sealed": null }),
+    )
+}
+
+#[tauri::command]
+fn quest_video_progress(
+    token: String,
+    quest_id: String,
+    timestamp: f64,
+) -> Result<serde_json::Value, String> {
+    quest_post(
+        token.trim(),
+        &format!("{quest_id}/video-progress"),
+        serde_json::json!({ "timestamp": timestamp }),
+    )
+}
+
+#[tauri::command]
+fn quest_claim(token: String, quest_id: String) -> Result<serde_json::Value, String> {
+    quest_post(
+        token.trim(),
+        &format!("{quest_id}/claim-reward"),
+        serde_json::json!({}),
+    )
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(AppState::default())
+        .setup(|_app| {
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_detectable_games,
             start_dummy_process,
@@ -763,7 +892,12 @@ pub fn run() {
             list_processes,
             resume_stashed_process,
             drop_stashed_process,
-            get_farm_state
+            get_farm_state,
+            quest_list,
+            quest_enroll,
+            quest_video_progress,
+            quest_claim,
+            quest_me
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -32,3 +32,28 @@ commands.allow = ["drop_stashed_process"]
 identifier = "allow-get-farm-state"
 description = "Read farm totals and stashed sessions"
 commands.allow = ["get_farm_state"]
+
+[[permission]]
+identifier = "allow-quest-list"
+description = "Fetch current Discord quests"
+commands.allow = ["quest_list"]
+
+[[permission]]
+identifier = "allow-quest-enroll"
+description = "Enroll in a Discord quest"
+commands.allow = ["quest_enroll"]
+
+[[permission]]
+identifier = "allow-quest-video-progress"
+description = "Report video quest watch progress"
+commands.allow = ["quest_video_progress"]
+
+[[permission]]
+identifier = "allow-quest-claim"
+description = "Claim a Discord quest reward"
+commands.allow = ["quest_claim"]
+
+[[permission]]
+identifier = "allow-quest-me"
+description = "Fetch the current Discord user profile"
+commands.allow = ["quest_me"]

@@ -22,16 +22,24 @@ Active panel, so you know exactly when to claim.
 
 ## Download and install
 
-Grab `Quest.Rig_0.4.0_x64-setup.exe` from
+Grab `Quest.Rig_0.5.0_x64-setup.exe` from
 [Releases](../../releases) (built automatically by CI on every `v*` tag) and run
 it. Standard installer with desktop/start-menu shortcuts and an
 English/Russian language selector. WebView2 gets installed automatically if
 it is missing.
 
-The installers are not code-signed, so Windows SmartScreen shows
+The installers are not code-signed by default, so Windows SmartScreen shows
 "Windows protected your PC" on first launch. That is expected for any
 unsigned build. More info, then Run anyway. Everything is built by GitHub
 Actions straight from the tagged source.
+
+To ship signed installers, buy a code signing certificate from a trusted
+CA (OV works, EV skips the SmartScreen reputation wait) and add it to the
+repo secrets as `WINDOWS_CERTIFICATE` (base64 of the .pfx) plus
+`WINDOWS_CERTIFICATE_PASSWORD`. The release workflow picks it up
+automatically and signs the build. A self-signed cert changes nothing
+for SmartScreen, but `scripts/selfsign-cert.ps1` creates one for local
+signing tests.
 
 Building from source:
 
@@ -99,4 +107,6 @@ Sessions are persisted to `%LOCALAPPDATA%\DiscordQuest\sessions.json`:
 
 Educational tool. This targets a specific chat client's quest system and
 violates its ToS. Use at your own risk.
-Licensed under [MIT](LICENSE).
+Licensed under [view & study only terms](LICENSE): you may look at the
+code to learn from it. Copying, sharing, modifying, and any commercial
+use are not allowed.
