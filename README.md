@@ -1,8 +1,12 @@
 # Discord Quest
 
-A Windows app that completes Discord "play a game" quests for you. Pick a game
-from the catalog, hit Launch, wait for the 15:00 timer, claim the reward.
-No installs, no client patching.
+A Windows app that completes Discord quests for you. Two tabs:
+
+- **Games** — pick a game from the catalog, hit Launch, wait for the 15:00
+  timer, claim the reward. No installs, no client patching.
+- **Video** — paste your user token once and video quests watch themselves:
+  enroll, progress at 1x, claim. The token never leaves your PC except to
+  `discord.com`.
 
 ## Demo
 
@@ -15,12 +19,31 @@ https://github.com/user-attachments/assets/6ac24b96-9003-4d4b-ae27-f961402a2224
 | Play a game for 15 minutes | Yes | the core feature: a fake process with the quest game's exe name |
 | Play 2/3 different games | Yes | launch several fakes at once, timers run in parallel |
 | Play a specific quest game | Yes | search it by name, launch its fake |
-| Watch-a-video / click quests | n/a | just click them in the Quests tab, no fake needed |
+| Watch-a-video quests | Yes | Video tab: auto-watch with your token, then claim |
 | Achievement / in-game progress | No | the client checks real game telemetry, a fake process can't provide it |
 
 While a fake is running, Discord sees the game as detected and its server-side
 timer accumulates. The app mirrors the 15:00 progress per session in the
 Active panel, so you know exactly when to claim.
+
+## Video quests
+
+Open the Video tab and paste your Discord token. The app first checks the
+format locally, then verifies it against `users/@me` — random words are
+rejected and never saved. A saved token is re-checked on startup; a 401
+drops it back to the token screen (a network error does not).
+
+Watching works like the real player: enroll in the quest, report progress
+roughly every 4 seconds at 1x speed, claim when done. Progress shows as a
+ring around the quest badge; a green ring means done.
+
+Risks, stated plainly:
+
+- A user token is full account access. It is stored only on this PC and sent
+  only to `discord.com`, but anyone holding it owns the account. Never share
+  it; change your password to revoke it.
+- Automating quests violates Discord's ToS. There is no safe way to do it —
+  an account ban or quest disqualification is possible. Use at your own risk.
 
 ## Download and install
 
