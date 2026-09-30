@@ -9,7 +9,7 @@ No installs, no client patching.
 ## Demo
 
 <p align="center">
-  <video src="https://github.com/muwuv/quest-rig/releases/download/v0.5.0/demo.mp4" controls muted loop width="100%"></video>
+  <video src="demo.mp4" controls muted loop width="100%"></video>
 </p>
 
 ## What it covers
