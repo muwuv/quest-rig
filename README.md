@@ -6,6 +6,12 @@ No installs, no client patching.
 
 ![app screenshot](Banner.png)
 
+## Demo
+
+<p align="center">
+  <video src="https://github.com/muwuv/quest-rig/releases/download/v0.5.0/demo.mp4" controls muted loop width="100%"></video>
+</p>
+
 ## What it covers
 
 | Quest type | Works | Notes |
