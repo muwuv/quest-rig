@@ -4,8 +4,6 @@ A Windows app that completes Discord "play a game" quests for you. Pick a game
 from the catalog, hit Launch, wait for the 15:00 timer, claim the reward.
 No installs, no client patching.
 
-![app screenshot](Banner.png)
-
 ## Demo
 
 https://github.com/user-attachments/assets/6ac24b96-9003-4d4b-ae27-f961402a2224
