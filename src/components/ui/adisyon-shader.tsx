@@ -370,6 +370,7 @@ export function ShaderBackground({ className }: { className?: string }) {
     let lastNow: number | null = null;
     let visible = document.visibilityState === "visible";
     let inView = true;
+    let focused = document.hasFocus();
     let disposed = false;
     const start = performance.now();
     const timeAnimated = Math.abs(UNIFORMS.timeScale) > 0.0001;
@@ -389,7 +390,7 @@ export function ShaderBackground({ className }: { className?: string }) {
     };
 
     function requestRender() {
-      if (!disposed && visible && inView && raf === 0) {
+      if (!disposed && visible && inView && focused && raf === 0) {
         raf = requestAnimationFrame(render);
       }
     }
@@ -437,6 +438,20 @@ export function ShaderBackground({ className }: { className?: string }) {
       requestRender();
     };
     window.addEventListener("resize", updateLayout);
+    const onBlur = () => {
+      focused = false;
+      if (raf !== 0) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        lastNow = null;
+      }
+    };
+    const onFocus = () => {
+      focused = true;
+      requestRender();
+    };
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
     if (UNIFORMS.cursorEnabled) {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
       window.addEventListener("pointercancel", onPointerLeave);
@@ -470,7 +485,7 @@ export function ShaderBackground({ className }: { className?: string }) {
 
     function render(now: number) {
       raf = 0;
-      if (disposed || !visible || !inView) return;
+      if (disposed || !visible || !inView || !focused) return;
       const dt = lastNow === null ? 0 : Math.min((now - lastNow) / 1000, 0.1);
       lastNow = now;
       const follow = 1 - Math.exp(-12 * dt);
@@ -505,6 +520,8 @@ export function ShaderBackground({ className }: { className?: string }) {
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("resize", updateLayout);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
       if (UNIFORMS.cursorEnabled) {
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("pointercancel", onPointerLeave);

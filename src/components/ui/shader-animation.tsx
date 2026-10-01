@@ -75,7 +75,7 @@ export function ShaderAnimation() {
     scene.add(mesh);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 
     container.appendChild(renderer.domElement);
 
@@ -92,16 +92,52 @@ export function ShaderAnimation() {
     onWindowResize();
     window.addEventListener("resize", onWindowResize, false);
 
-    // Animation loop
-    const animate = () => {
-      const animationId = requestAnimationFrame(animate);
-      uniforms.time.value += 0.05;
-      renderer.render(scene, camera);
-
-      if (sceneRef.current) {
-        sceneRef.current.animationId = animationId;
+    // Pause rendering while the canvas is not visible: no GPU burn
+    // on hidden tabs, minimized windows, or scrolled-away layers
+    let raf = 0;
+    let inView = true;
+    let pageVisible = document.visibilityState === "visible";
+    let focused = document.hasFocus();
+    const shouldRun = () => inView && pageVisible && focused;
+    const stop = () => {
+      if (raf !== 0) {
+        cancelAnimationFrame(raf);
+        raf = 0;
       }
     };
+    const start = () => {
+      if (raf !== 0 || !shouldRun()) return;
+      const loop = () => {
+        raf = requestAnimationFrame(loop);
+        uniforms.time.value += 0.05;
+        renderer.render(scene, camera);
+      };
+      raf = requestAnimationFrame(loop);
+    };
+    const refresh = () => (shouldRun() ? start() : stop());
+    const onVisibilityChange = () => {
+      pageVisible = document.visibilityState === "visible";
+      refresh();
+    };
+    const onBlur = () => {
+      focused = false;
+      stop();
+    };
+    const onFocus = () => {
+      focused = true;
+      refresh();
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry?.isIntersecting ?? true;
+        refresh();
+      },
+      { threshold: 0 },
+    );
+    io.observe(container);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
 
     // Store scene references for cleanup
     sceneRef.current = {
@@ -112,16 +148,19 @@ export function ShaderAnimation() {
       animationId: 0,
     };
 
-    // Start animation
-    animate();
+    // Start animation (only while visible)
+    start();
 
     // Cleanup function
     return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
       window.removeEventListener("resize", onWindowResize);
 
       if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.animationId);
-
         if (container && sceneRef.current.renderer.domElement) {
           container.removeChild(sceneRef.current.renderer.domElement);
         }
